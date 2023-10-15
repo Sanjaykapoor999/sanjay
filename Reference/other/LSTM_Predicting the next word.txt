@@ -1,0 +1,85 @@
+import numpy as np
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Embedding
+from sklearn.utils.class_weight import compute_class_weight
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+from tensorflow.keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import GridSearchCV
+
+# Step 1: Data Preparation
+text_data = [
+    "The quick brown fox jumps over the lazy dog",
+    "She sells seashells by the seashore",
+    "How much wood would a woodchuck chuck"
+]
+
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(text_data)
+sequences = tokenizer.texts_to_sequences(text_data)
+
+# Step 2: Sequence Generation
+seq_length = 5
+X, y = [], []
+for sequence in sequences:
+    for i in range(seq_length, len(sequence)):
+        X.append(sequence[i - seq_length:i])
+        y.append(sequence[i])
+
+X = np.array(X)
+y = np.array(y)
+
+# Step 3: Label Generation
+y = to_categorical(y, num_classes=len(tokenizer.word_index) + 1)
+
+# Step 4: One-Hot Encoding
+
+# Step 5: Model Building
+vocab_size = len(tokenizer.word_index) + 1
+embedding_dim = 50
+
+def create_lstm_model(embedding_dim, lstm_units, dense_units):
+    model = Sequential()
+    model.add(Embedding(input_dim=vocab_size, output_dim=embedding_dim, input_length=seq_length))
+    model.add(LSTM(lstm_units))
+    model.add(Dense(dense_units, activation='relu'))
+    model.add(Dense(vocab_size, activation='softmax'))
+    model.compile(loss='categorical_crossentropy', optimizer='adam')
+    return model
+
+model = KerasClassifier(build_fn=create_lstm_model, verbose=0)
+
+# Step 6: Handling Class Imbalance
+class_weights = compute_class_weight('balanced', np.unique(y), y)
+model.fit(X, y, epochs=100, batch_size=32, class_weight=class_weights)
+
+# Step 7: Testing Accuracy
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+model.fit(X_train, y_train, epochs=100, batch_size=32)
+
+y_pred = model.predict(X_test)
+y_pred_labels = np.argmax(y_pred, axis=1)
+y_true_labels = np.argmax(y_test, axis=1)
+accuracy = accuracy_score(y_true_labels, y_pred_labels)
+print(f"Testing Accuracy: {accuracy}")
+
+# Step 8: Hyperparameter Tuning
+param_grid = {
+    'embedding_dim': [50, 100],
+    'lstm_units': [50, 100],
+    'dense_units': [50, 100],
+    'epochs': [20, 50],
+    'batch_size': [32, 64]
+}
+
+grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring='accuracy', cv=3)
+grid_result = grid.fit(X, y)
+
+best_params = grid_result.best_params_
+best_accuracy = grid_result.best_score_
+
+print(f"Best Hyperparameters: {best_params}")
+print(f"Best Accuracy: {best_accuracy}")
