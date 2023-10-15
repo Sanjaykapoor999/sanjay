@@ -1,0 +1,247 @@
+import numpy as np
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense, Embedding
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import accuracy_score
+
+# Step 1: Load Text from a File
+with open('your_text_file.txt', 'r', encoding='utf-8') as file:
+    text_data = file.read().lower()  # Read and convert text to lowercase
+
+# Step 2: Tokenization
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts([text_data])
+sequences = tokenizer.texts_to_sequences([text_data])[0]
+
+# Step 3: Sequence Generation
+seq_length = 5
+X, y = [], []
+for i in range(seq_length, len(sequences)):
+    X.append(sequences[i - seq_length:i])
+    y.append(sequences[i])
+
+X = np.array(X)
+y = np.array(y)
+
+# Step 4: Model Building
+vocab_size = len(tokenizer.word_index) + 1
+
+def create_rnn_model(embedding_dim, rnn_units, seq_length):
+    model = Sequential()
+    model.add(Embedding(input_dim=vocab_size, output_dim=embedding_dim, input_length=seq_length))
+    model.add(SimpleRNN(rnn_units, activation='tanh'))
+    model.add(Dense(vocab_size, activation='softmax'))
+    model.compile(loss='sparse_categorical_crossentropy', optimizer='adam')
+    return model
+
+# Step 5: Hyperparameter Tuning
+param_grid = {
+    'embedding_dim': [50, 100],
+    'rnn_units': [50, 100],
+    'seq_length': [5, 10],
+    'batch_size': [32, 64]
+}
+
+model = KerasClassifier(build_fn=create_rnn_model, verbose=0)
+grid = GridSearchCV(estimator=model, param_grid=param_grid, scoring='accuracy', cv=3)
+grid_result = grid.fit(X, y)
+
+best_params = grid_result.best_params_
+best_accuracy = grid_result.best_score_
+
+print(f"Best Hyperparameters: {best_params}")
+print(f"Best Accuracy: {best_accuracy}")
+
+# Step 6: Model Training with Best Hyperparameters
+best_embedding_dim = best_params['embedding_dim']
+best_rnn_units = best_params['rnn_units']
+best_seq_length = best_params['seq_length']
+best_batch_size = best_params['batch_size']
+
+best_model = create_rnn_model(best_embedding_dim, best_rnn_units, best_seq_length)
+best_model.fit(X, y, epochs=100, batch_size=best_batch_size, verbose=1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+import matplotlib.pyplot as plt
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense, Embedding
+
+# Step 1: Load Text from a File
+with open('your_text_file.txt', 'r', encoding='utf-8') as file:
+    text_data = file.read().lower()  # Read and convert text to lowercase
+
+# Step 2: Tokenization
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts([text_data])
+sequences = tokenizer.texts_to_sequences([text_data])[0]
+
+# Step 3: Sequence Generation
+seq_length = 5
+X, y = [], []
+for i in range(seq_length, len(sequences)):
+    X.append(sequences[i - seq_length:i])
+    y.append(sequences[i])
+
+X = np.array(X)
+y = np.array(y)
+
+# Step 4: Model Building
+vocab_size = len(tokenizer.word_index) + 1
+embedding_dim = 50
+
+model = Sequential()
+model.add(Embedding(input_dim=vocab_size, output_dim=embedding_dim, input_length=seq_length))
+model.add(SimpleRNN(100, activation='tanh'))
+model.add(Dense(vocab_size, activation='softmax'))
+
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam')
+
+# Step 5: Model Training
+history = model.fit(X, y, epochs=100, batch_size=32, verbose=1)
+
+# Step 6: Plot Training Loss
+loss = history.history['loss']
+epochs = range(1, len(loss) + 1)
+plt.plot(epochs, loss, 'bo', label='Training loss')
+plt.title('Training Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+plt.show()
+
+# Step 7: Text Generation
+seed_text = "your initial seed text here"
+predicted_text = []
+
+for _ in range(100):  # You can adjust the number of words to generate
+    input_sequence = tokenizer.texts_to_sequences([seed_text])[0]
+    predicted_word_index = model.predict_classes(np.array([input_sequence]), verbose=0)
+    predicted_word = tokenizer.index_word[predicted_word_index[0]]
+    predicted_text.append(predicted_word)
+    seed_text += " " + predicted_word
+
+generated_text = " ".join(predicted_text)
+print("Generated Text:")
+print(generated_text)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import numpy as np
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import SimpleRNN, Dense, Embedding
+
+# Step 1: Load Text from a File
+with open('your_text_file.txt', 'r', encoding='utf-8') as file:
+    text_data = file.read().lower()  # Read and convert text to lowercase
+
+# Step 2: Tokenization
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts([text_data])
+sequences = tokenizer.texts_to_sequences([text_data])[0]
+
+# Step 3: Sequence Generation
+seq_length = 5
+X, y = [], []
+for i in range(seq_length, len(sequences)):
+    X.append(sequences[i - seq_length:i])
+    y.append(sequences[i])
+
+X = np.array(X)
+y = np.array(y)
+
+# Step 4: Model Building
+vocab_size = len(tokenizer.word_index) + 1
+embedding_dim = 50
+
+model = Sequential()
+model.add(Embedding(input_dim=vocab_size, output_dim=embedding_dim, input_length=seq_length))
+model.add(SimpleRNN(100, activation='tanh'))
+model.add(Dense(vocab_size, activation='softmax'))
+
+model.compile(loss='sparse_categorical_crossentropy', optimizer='adam')
+
+# Step 5: Model Training
+model.fit(X, y, epochs=100, batch_size=32)
+
+# Step 6: Text Generation
+seed_text = "your initial seed text here"
+predicted_text = []
+
+for _ in range(100):  # You can adjust the number of words to generate
+    input_sequence = tokenizer.texts_to_sequences([seed_text])[0]
+    predicted_word_index = model.predict_classes(np.array([input_sequence]), verbose=0)
+    predicted_word = tokenizer.index_word[predicted_word_index[0]]
+    predicted_text.append(predicted_word)
+    seed_text += " " + predicted_word
+
+generated_text = " ".join(predicted_text)
+print("Generated Text:")
+print(generated_text)
+
